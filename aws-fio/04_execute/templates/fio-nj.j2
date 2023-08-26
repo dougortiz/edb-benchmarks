@@ -1,0 +1,13 @@
+[read-write]
+rw=rw
+rwmixread=50
+size=2*$mb_memory
+directory=/fio
+fadvise_hint=0
+blocksize=8k
+direct=0
+numjobs={{ fio_numjobs }}
+nrfiles=1
+runtime={{ fio_duration }}
+time_based
+exec_prerun=echo 3 > /proc/sys/vm/drop_caches

@@ -1,0 +1,15 @@
+---
+- hosts: all
+  name: Create fio random read/write job file
+  become: true
+  gather_facts: true
+
+  collections:
+    - edb_devops.edb_postgres
+
+  tasks:
+    - name: Generate fio random read / write job file {{ fio_numjobs }}
+      ansible.builtin.template:
+        src: "templates/fio-nj.j2"
+        dest: "/root/fio-nj{{ fio_numjobs }}"
+      become: true

@@ -1,0 +1,12 @@
+[seq-read]
+rw=read
+size=2*$mb_memory
+directory=/fio
+fadvise_hint=0
+blocksize=8k
+direct=0
+numjobs=1
+nrfiles=1
+runtime={{ fio_duration }}
+time_based
+exec_prerun=echo 3 > /proc/sys/vm/drop_caches

@@ -1,0 +1,41 @@
+---
+- hosts: all
+  name: Run fio {{ fio_test }}
+
+  tasks:
+    - name: Clear any previously saved touchstone data {{ fio_test }}
+      ansible.builtin.file:
+        path: "/tmp/{{ fio_test }}"
+        state: absent
+      become: true
+
+    - name: Start system stats collection {{ fio_test }}
+      ansible.builtin.command:
+        cmd: ts sysstat -o /tmp/{{ fio_test }}
+      become: true
+      async: 1
+      poll: 0
+
+    - name: Run fio test {{ fio_test }}
+      ansible.builtin.command:
+        chdir: /fio
+        cmd: fio --output-format=json+ /root/{{ fio_test }}
+      register: fio
+      become: true
+
+    - name: Start system stats collection {{ fio_test }}
+      ansible.builtin.command:
+        cmd: ts sysstat -o /tmp/{{ fio_test }} -s
+      become: true
+
+    - name: Save fio test results {{ fio_test }}
+      local_action:
+        module: ansible.builtin.copy
+        content: "{{ fio.stdout }}"
+        dest: "{{results_directory}}/{{ fio_test }}.txt"
+
+    - name: Fetch system statistics {{ fio_test }}
+      ansible.posix.synchronize:
+        mode: pull
+        src: "/tmp/{{ fio_test }}"
+        dest: "{{ results_directory }}/stats/"

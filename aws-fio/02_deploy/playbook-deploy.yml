@@ -1,0 +1,56 @@
+---
+- hosts: all
+  name: Install fio
+  become: true
+  gather_facts: true
+
+  collections:
+    - edb_devops.edb_postgres
+
+  pre_tasks:
+    - name: Initialize the user defined variables
+      ansible.builtin.set_fact:
+        enable_core_dump: true
+
+    - name: Install requirements for building and using fio
+      ansible.builtin.package:
+        name: "{{ item }}"
+      loop:
+        - gcc
+        - make
+      become: true
+
+  roles:
+    - setup_fio
+    - setup_touchstone_tools
+
+  tasks:
+    - name: Generate fio sequential read job file
+      ansible.builtin.template:
+        src: "templates/fio-sr.j2"
+        dest: "/root/fio-sr"
+      become: true
+
+    - name: Generate fio sequential write job file
+      ansible.builtin.template:
+        src: "templates/fio-sw.j2"
+        dest: "/root/fio-sw"
+      become: true
+
+    - name: Generate fio random read job file
+      ansible.builtin.template:
+        src: "templates/fio-rr.j2"
+        dest: "/root/fio-rr"
+      become: true
+
+    - name: Generate fio random write job file
+      ansible.builtin.template:
+        src: "templates/fio-rw.j2"
+        dest: "/root/fio-rw"
+      become: true
+
+    - name: Generate fio random read / write job file
+      ansible.builtin.template:
+        src: "templates/fio-rewr.j2"
+        dest: "/root/fio-rewr"
+      become: true
