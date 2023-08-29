@@ -1,5 +1,5 @@
 ---
-- hosts: pgd
+- hosts: primary
   name: Setup synchronous replication
   gather_facts: false
   become: true
@@ -16,7 +16,7 @@
         login_user: "{{ pg_user }}"
         port: 5444
         login_unix_socket: "{{ pg_login_unix_socket }}"
-        db: "{{ bdr_dbname }}"
+        db: "{{ pgd_cluster_database }}"
         autocommit: true
       when: inventory_hostname == 'pgd1'
       become: true
@@ -29,7 +29,7 @@
         login_user: "{{ pg_user }}"
         port: 5444
         login_unix_socket: "{{ pg_login_unix_socket }}"
-        db: "{{ bdr_dbname }}"
+        db: "{{ pgd_cluster_database }}"
         autocommit: true
       when: inventory_hostname == 'pgd1'
       become: true
@@ -42,7 +42,7 @@
         login_user: "{{ pg_user }}"
         port: 5444
         login_unix_socket: "{{ pg_login_unix_socket }}"
-        db: "{{ bdr_dbname }}"
+        db: "{{ pgd_cluster_database }}"
         autocommit: true
       when: inventory_hostname == 'pgd1'
       become: true
