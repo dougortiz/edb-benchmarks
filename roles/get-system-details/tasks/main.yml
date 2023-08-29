@@ -1,0 +1,132 @@
+---
+- name: Set local save directory
+  ansible.builtin.set_fact:
+    save_dir: "{{ results_directory }}/{{ inventory_hostname }}"
+
+- name: Create local save directory
+  local_action:
+    module: ansible.builtin.file
+    path: "{{ save_dir }}"
+    state: directory
+
+# Probably need escalated privileges to capture all data.
+- name: Capture dmesg output
+  ansible.builtin.command:
+    cmd: dmesg --human
+  register: dmesg
+  become: true
+
+- name: Save dmesg output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ dmesg.stdout }}"
+    dest: "{{ save_dir }}/dmesg.txt"
+
+- name: Capture sysctl output
+  ansible.builtin.command:
+    cmd: sysctl -a
+  register: sysctl
+  become: true
+
+- name: Save sysctl output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ sysctl.stdout }}"
+    dest: "{{ save_dir }}/sysctl.txt"
+
+- name: Capture systemd journal output
+  ansible.builtin.command:
+    cmd: journalctl -xa
+  register: journalctl
+  become: true
+
+- name: Save systemd journal output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ journalctl.stdout }}"
+    dest: "{{ save_dir }}/journalctl.txt"
+
+- name: Check if PostgreSQL log exists
+  ansible.builtin.stat:
+    path: "{{ pg_log }}/{{ pg_log_filename }}"
+  register: pglog
+  when: pg_log is defined and pg_log_filename is defined
+  become: true
+
+- name: Fetch PostgreSQL log
+  ansible.builtin.fetch:
+    src: "{{ pg_log }}/{{ pg_log_filename }}"
+    dest: "{{ save_dir }}/{{ pg_log_filename }}"
+    flat: true
+  become: true
+  when: pg_log is defined and pg_log_filename is defined
+
+# coredumpctl will fail if in the middle of processing a coredump, give it up
+# to an hour to finish.
+- name: Capture coredumpctl info output
+  ansible.builtin.shell:
+    cmd: coredumpctl info
+  retries: 60
+  delay: 60
+  register: coredumpctl
+  until: coredumpctl.rc == 0
+  become: true
+
+- name: Save coredumpctl info output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ coredumpctl.stdout }}"
+    dest: "{{ save_dir }}/coredumpctl.txt"
+
+- name: Save core dumps
+  ansible.posix.synchronize:
+    mode: pull
+    src: "/var/lib/systemd/coredump"
+    dest: "{{ save_dir }}/coredump"
+  become: true
+
+# Don't need escalated privileges to capture all data.
+- name: Capture mount output
+  ansible.builtin.command:
+    cmd: mount
+  register: mount
+  become: true
+
+- name: Save mount output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ mount.stdout }}"
+    dest: "{{ save_dir }}/mount.txt"
+
+- name: Capture lsblk output
+  ansible.builtin.command:
+    cmd: lsblk
+  register: lsblk
+
+- name: Save lsblk output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ lsblk.stdout }}"
+    dest: "{{ save_dir }}/lsblk.txt"
+
+- name: Capture lscpu output
+  ansible.builtin.command:
+    cmd: lscpu
+  register: lscpu
+
+- name: Save lscpu output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ lscpu.stdout }}"
+    dest: "{{ save_dir }}/lscpu.txt"
+
+- name: Capture meminfo output
+  ansible.builtin.command:
+    cmd: cat /proc/meminfo
+  register: meminfo
+
+- name: Save lscpu output
+  local_action:
+    module: ansible.builtin.copy
+    content: "{{ meminfo.stdout }}"
+    dest: "{{ save_dir }}/meminfo.txt"
