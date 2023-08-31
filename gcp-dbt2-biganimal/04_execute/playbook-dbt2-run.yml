@@ -52,7 +52,7 @@
       ansible.builtin.command:
         cmd: >-
           dbt2 run
-            --comment "BigAnimal PostgreSQL {{ infra.servers.biganimal.dbt2.all.instance_type }} | {{ infra.servers.biganimal.dbt2.all.storage.0.size }} {{ infra.servers.biganimal.dbt2.all.storage.0.volume_type }} | {{ infra.servers.biganimal.dbt2.all.storage.0.iops }} IOPS | Driver {{ driver_instance_type }}"
+            --comment "BigAnimal PostgreSQL {{ infra.servers.biganimal.dbt2.all.instance_type }} | {{ infra.servers.biganimal.dbt2.all.storage.size }} {{ infra.servers.biganimal.dbt2.all.storage.volume_type }} | {{ infra.servers.biganimal.dbt2.all.storage.iops }} IOPS | Driver {{ driver_instance_type }}"
             --connection-delay={{ connection_delay }}
             --connections-per-processor={{ fpp }}
             --db-host={{ address.stdout_lines[-1] }}
