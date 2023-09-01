@@ -1,0 +1,144 @@
+---
+- hosts: hammerdb
+  name: Configure HammerDB TPROC-C
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+
+  pre_tasks:
+    - wait_for_connection:
+      delay: 5
+      timeout: 600
+
+    - name: Initialize the user defined variables
+      ansible.builtin.set_fact:
+        disable_logging: false
+
+  collections:
+    - edb_devops.edb_postgres
+
+  tasks:
+    - name: Load servers.yml
+      ansible.builtin.include_vars:
+        file: "{{ terraform_project_path }}/servers.yml"
+        name: infra
+
+    - name: Install psql
+      ansible.builtin.package:
+        name: postgresql
+      become: true
+
+    - name: Generate HammerDB loader script
+      ansible.builtin.template:
+        src: loader.tcl.j2
+        dest: "/home/{{ hammerdb_user }}/loader.tcl"
+      become_user: "{{ hammerdb_user }}"
+
+- hosts: primary
+  name: Configure Postgres Distributed
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+
+  pre_tasks:
+    - name: Load servers.yml
+      ansible.builtin.include_vars:
+        file: "{{ terraform_project_path }}/servers.yml"
+        name: infra
+
+    - name: Initialize the user defined variables
+      ansible.builtin.set_fact:
+        disable_logging: false
+
+        pg_hba_ip_addresses:
+          - contype: "host"
+            users: "all"
+            databases: "all"
+            method: "trust"
+            source: "{{ infra.servers.machines.hammerdb.private_ip }}/24"
+            state: present
+          - contype: "host"
+            users: "all"
+            databases: "all"
+            method: "trust"
+            source: "{{ infra.servers.machines.pgd1.private_ip }}/24"
+            state: present
+          - contype: "host"
+            users: "all"
+            databases: "all"
+            method: "trust"
+            source: "{{ infra.servers.machines.pgd2.private_ip }}/24"
+            state: present
+          - contype: "host"
+            users: "all"
+            databases: "all"
+            method: "trust"
+            source: "{{ infra.servers.machines.pgd3.private_ip }}/24"
+            state: present
+
+        pg_postgres_conf_params:
+          - name: autovacuum_work_mem
+            value: '1GB'
+          - name: checkpoint_completion_target
+            value: '0.93'
+          - name: checkpoint_timeout
+            value: '30min'
+          - name: cpu_tuple_cost
+            value: '0.03'
+          - name: effective_cache_size
+            value: '80GB'
+          - name: effective_io_concurrency
+            value: '200'
+          - name: maintenance_work_mem
+            value: '1GB'
+          - name: max_parallel_maintenance_workers
+            value: '8'
+          - name: max_connections
+            value: '150'
+          - name: max_replication_slots
+            value: '40'
+          - name: max_wal_size
+            value: '200GB'
+          - name: min_wal_size
+            value: '1GB'
+          - name: random_page_cost
+            value: '1.1'
+          - name: shared_buffers
+            value: '16GB'
+          - name: wal_buffers
+            value: '64MB'
+          - name: work_mem
+            value: '32MB'
+          - name: max_parallel_workers_per_gather
+            value: '8'
+          - name: edb_dynatune
+            value: '100'
+          - name: bdr.max_writers_per_subscription
+            value: '16'
+          - name: bdr.default_streaming_mode
+            value: 'auto'
+          - name: bdr.receive_lcr
+            value: 'off'
+          - name: bdr.enable_wal_decoder
+            value: 'off'
+          - name: archive_mode
+            value: 'off'
+          - name: max_worker_processes
+            value: '50'
+          - name: log_filename
+            value: 'postgresql.log'
+          - name: log_statement
+            value: 'all'
+
+  collections:
+    - edb_devops.edb_postgres
+
+  roles:
+    - setup_repo
+    - install_dbserver
+    - init_dbserver
+    - manage_dbserver
+    - setup_pgd
+    - setup_hammerdb

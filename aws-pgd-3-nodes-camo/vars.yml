@@ -1,0 +1,47 @@
+---
+cluster_name: PGD-3-Nodes-CAMO
+pg_version: 15
+pg_type: EPAS
+edb_enable_tde: false
+edb_key_unwrap_cmd: ""    # EDB Unwrap command to decrypt EDB master key. Use can use KMS command to get the real key
+edb_key_wrap_cmd: ""
+edb_master_key: ""
+edb_secure_master_key: ""
+install_pgd: true
+pgd_version: 5
+enable_pgdg_repo: true
+
+pg_port: 5432
+pg_database: postgres
+pg_owner: postgres
+pg_group: postgres
+pg_owner_password: postgres
+pg_user: postgres
+
+pgd_cluster_name: pgd_cluster
+pgd_cluster_database: "{{ pg_database }}"
+pgd_cluster_database_owner: "{{ pg_owner }}"
+pgd_replication_user: pgd_replication_user
+
+#pg_data: /pgdata/data
+#pg_data: /var/lib/pgsql/{{ pg_version }}/data
+#pg_data: /var/lib/pgsql/data
+#pg_wal: /pgwal/wal
+#pg_wal: ""
+
+disable_logging: false
+# pg_allow_ip_addresses: []
+#pg_login_unix_socket: /var/run/postgresql
+# bdr_writers: 16
+# bdr_wal_decoder: false
+
+#enable_edb_repo: true
+
+# unix socket domain directories
+pg_unix_socket_directories:
+  - "/var/run/postgresql"
+
+initdb_executed: true
+
+# For CAMO Commit Scopes
+max_prepared_transactions: 100

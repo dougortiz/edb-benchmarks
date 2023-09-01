@@ -1,0 +1,46 @@
+---
+- hosts: hammerdb
+  name: Run HammerDB - rampup test
+  gather_facts: false
+  become: true
+
+  collections:
+    - edb_devops.edb_postgres
+
+  tasks:
+    - name: Load servers.yml
+      ansible.builtin.include_vars:
+        file: "{{ terraform_project_path }}/servers.yml"
+        name: infra
+
+    - name: Copy the exec-hdb-rampup.sh file
+      ansible.builtin.copy:
+        src: files/exec-hdb-rampup.sh
+        dest: "/home/{{ hammerdb_user }}/exec-hdb-rampup.sh"
+        mode: "0755"
+      become_user: "{{ hammerdb_user }}"
+
+    - name: Execute the ramping up workload
+      ansible.builtin.shell: >
+        /home/{{ hammerdb_user }}/exec-hdb-rampup.sh >> /home/{{ hammerdb_user }}/pgd_nopm_catchup_time.csv
+      args:
+        executable: /bin/bash
+      environment:
+        PG_HOST: "{{ infra.servers.machines.pgd1.private_ip }}"
+        HAMMERDB_BIN_PATH: "/home/{{ hammerdb_user }}/HammerDB-{{ hammerdb_version }}"
+        TPCC_WAREHOUSE: "{{ tpcc_warehouse }}"
+        TPCC_RAMPUP: "{{ tpcc_rampup }}"
+        TPCC_DURATION: "{{ tpcc_duration }}"
+        TPCC_MIN_VUSERS: "{{ tpcc_min_vusers }}"
+        TPCC_MAX_VUSERS: "{{ tpcc_max_vusers }}"
+        TPCC_STEP_VUSERS: "{{ tpcc_step_vusers }}"
+        PG_DBNAME: "{{ pgd_cluster_database }}"
+      become_user: "{{ hammerdb_user }}"
+
+    - name: Fetch data files
+      ansible.builtin.fetch:
+        src: "/home/{{ hammerdb_user }}/{{ item }}"
+        dest: "{{ results_directory }}/{{ item }}"
+        flat: true
+      loop:
+      - "pgd_nopm_catchup_time.csv"

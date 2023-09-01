@@ -1,0 +1,104 @@
+---
+- hosts: all
+  name: Apply post-deployment operations
+  become: yes
+  gather_facts: yes
+
+  collections:
+    - edb_devops.edb_postgres
+
+  tasks:
+    - name: Load servers.yml
+      ansible.builtin.include_vars:
+        file: "{{ terraform_project_path }}/servers.yml"
+        name: infra
+
+    - name: Allow 'pg_owner' nonssl connections for 'pg_database' on the instances
+      ansible.builtin.lineinfile:
+        path: "{{ pg_data }}/pg_hba.conf"
+        line: "host   {{ pg_database }}  {{ pg_owner }}  {{ node.value.private_ip }}/32   scram-sha-256"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      become_user: "{{ pg_owner }}"
+
+    - name: Allow 'pg_owner' ssl connections for 'pg_database' on the instances
+      ansible.builtin.lineinfile:
+        path: "{{ pg_data }}/pg_hba.conf"
+        line: "hostssl   {{ pg_database }}  {{ pg_owner }}  {{ node.value.private_ip }}/32   scram-sha-256"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      become_user: "{{ pg_owner }}"
+
+    - name: Allow 'pgd_replication_user' nonssl connections for 'pgd_cluster_database' on the instances
+      ansible.builtin.lineinfile:
+        path: "{{ pg_data }}/pg_hba.conf"
+        line: "host   {{ pgd_cluster_database }}  {{ pgd_replication_user }}  {{ node.value.private_ip }}/32   scram-sha-256"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      become_user: "{{ pg_owner }}"
+
+    - name: Allow 'pgd_replication_user' ssl connections for 'pgd_cluster_database' on the instances
+      ansible.builtin.lineinfile:
+        path: "{{ pg_data }}/pg_hba.conf"
+        line: "hostssl   {{ pgd_cluster_database }}  {{ pgd_replication_user }}  {{ node.value.private_ip }}/32   scram-sha-256"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      become_user: "{{ pg_owner }}"
+
+    - name: Generate the pgd_cluster_database_owner_password
+      ansible.builtin.include_role:
+        name: manage_dbserver
+        tasks_from: generate_password
+      vars:
+        input_user: "{{ pg_owner }}"
+        input_password: "{{ pg_owner_password }}"
+      no_log: "{{ disable_logging }}"
+
+    - name: Set pgd_cluster_database_owner_password
+      ansible.builtin.set_fact:
+        pgd_cluster_database_owner_password: "{{ pg_owner_password }}"
+      no_log: "{{ disable_logging }}"
+
+    - name: Set postgres PGD database owners password
+      ansible.builtin.include_role:
+        name: manage_dbserver
+        tasks_from: manage_users
+      vars:
+        pg_users:
+          - name: "{{ pg_owner }}"
+            pass: "{{ pg_owner_password }}"
+            role_attr_flags: replication
+      no_log: "{{ disable_logging }}"
+
+    - name: Update the pgpass with postgres PGD database owners password
+      ansible.builtin.include_role:
+        name: manage_dbserver
+        tasks_from: manage_pgpass
+      vars:
+        pg_pgpass_values:
+          - user: "{{ pg_owner }}"
+            password: "{{ pg_owner_password }}"
+            create: true
+      no_log: "{{ disable_logging }}"
+
+    - name: Reload Postgres configuration
+      community.postgresql.postgresql_query:
+        query: >-
+          SELECT pg_reload_conf()
+        login_user: "{{ pg_user }}"
+        port: 5444
+        login_unix_socket: "{{ pg_login_unix_socket }}"
+        autocommit: true
+        db: "{{ pgd_cluster_database }}"
+      become: true
+      become_user: "{{ pg_owner }}"
+
+    - name: Restart Postgres on pgd1
+      ansible.builtin.systemd:
+        name: "edb-as-{{ pg_version }}"
+        state: restarted
+      become: true
