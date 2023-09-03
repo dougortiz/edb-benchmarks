@@ -1,0 +1,100 @@
+---
+- hosts: dbt2_driver
+  name: Run DBT2
+  gather_facts: true
+
+  collections:
+    - edb_devops.edb_postgres
+
+  tasks:
+    - name: Load servers.yml
+      ansible.builtin.include_vars:
+        file: "{{ terraform_project_path }}/servers.yml"
+        name: infra
+
+    # DBT-2 driver bug workaround.
+    - name: Ensure required packages are installed
+      ansible.builtin.package:
+        name:
+        - bind-utils
+      become: true
+
+    - name: Make sure DBT2 target data dir and archive do not exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      become: true
+      loop:
+        - /tmp/dbt2-data
+        - /tmp/dbt2-data.tar.gz
+
+    # Use dbt2_connections as a limit to the number of connections that may be
+    # opened, which in units matching the number of processors on the driver
+    # system.  This is a bit of a dirty hack that could be clarified.
+    - name: Calculate drivers per processor
+      ansible.builtin.set_fact:
+        fpp: "{{ ((dbt2_connections | int) / ansible_processor_nproc) | int  }}"
+
+    # Convert the ramp up time minutes to milliseconds and calculate connection
+    # delay based on the targeted ramp up time.
+    - name: Calculate connection delay
+      ansible.builtin.set_fact:
+        connection_delay: "{{ ((dbt2_rampup | int) * 60000 / ((fpp | int) * \
+                          ansible_processor_nproc)) | int }}"
+
+    - name: Start dbt2-run-workload
+      ansible.builtin.command:
+        cmd: >-
+          dbt2 run
+            --comment "CloudSQL {{ pg_instance_type }} | {{ pg_storage_size }} {{ pg_storage_type }} | {{ pg_storage_iops }} IOPS | Driver {{ driver_instance_type }}"
+            --connection-delay={{ connection_delay }}
+            --connections-per-processor={{ fpp }}
+            --db-host={{ infra.servers.databases.mydb1.private_ip }}
+            --db-port={{ infra.servers.databases.mydb1.port }}
+            --dbaas
+            --districts 1
+            --duration={{ dbt2_duration }}
+            --stats
+            --warehouses={{ dbt2_warehouse }}
+            pgsql
+            /tmp/dbt2-data
+      environment:
+        PGHOST: "{{ infra.servers.databases.mydb1.private_ip }}"
+      become: true
+      become_user: "{{ pg_owner }}"
+      changed_when: false
+      register: result
+
+    - name: Workload execution output
+      ansible.builtin.debug:
+        var: result
+
+    # Ignore errors because dbt2-generate-report needs better return code logic.
+    - name: Generate DBT2 report
+      ansible.builtin.command:
+        cmd: dbt2 report --html /tmp/dbt2-data
+      become: true
+      become_user: "{{ pg_owner }}"
+      changed_when: false
+      register: result
+
+    - name: Report generation output
+      ansible.builtin.debug:
+        var: result
+
+    - name: Create data archive on remote
+      ansible.builtin.command:
+        cmd: tar cvzf /tmp/dbt2-data.tar.gz -C /tmp/dbt2-data/ .
+
+    - name: Fetch DBT2 data files to localhost
+      ansible.builtin.fetch:
+        src: "/tmp/dbt2-data.tar.gz"
+        dest: "{{ results_directory }}/"
+        flat: true
+
+    - name: Extract data contents to localhost results directory
+      ansible.builtin.shell:
+        cmd: >-
+          tar xzf "{{ results_directory }}/dbt2-data.tar.gz"
+          -C "{{ results_directory }}"
+      delegate_to: localhost

@@ -1,0 +1,67 @@
+---
+gcloud:
+  tags:
+    created_by: edb-terraform
+    cluster_name: gcp-dbt2-cloudsql
+  images:
+    driver:
+      name: rocky-linux-8
+      ssh_user: rocky
+    postgres:
+      name: {{ pg_image_name }}
+      ssh_user: {{ pg_ssh_user }}
+  regions:
+    {{ region }}:
+      cidr_block: 10.1.0.0/16
+      zones:
+        main:
+          zone: {{ zone0 }}
+          cidr: 10.1.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - port: 5432
+          protocol: tcp
+          description: "pgsql"
+  machines:
+    dbt2-driver:
+      image_name: driver
+      zone_name: main
+      tags:
+        type: dbt2-driver
+      region: {{ region }}
+      instance_type: {{ driver_instance_type }}
+      volume:
+        type: pd-standard
+        size_gb: 50
+  databases:
+    mydb1:
+      region: {{ region }}
+      zone: {{ zone0 }}
+      engine: {{ pg_engine }}
+      engine_version: {{ pg_version }}
+      instance_type: {{ pg_instance_type }}
+      dbname: "edb"
+      username: "edb_admin"
+      password: {{ pg_password }}
+      port: {{ pg_port }}
+      volume:
+        size_gb: {{ pg_storage_size }}
+        type: {{ pg_storage_type }}
+        iops: {{ pg_storage_iops }}
+        encrypted: true
+      settings:
+        - name: checkpoint_timeout
+          value: 900
+        - name: max_connections
+          value: 300
+        - name: max_wal_size
+          value: 5000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+      tags:
+        dbname: dbt2
