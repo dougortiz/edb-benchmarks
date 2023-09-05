@@ -20,7 +20,3 @@ ansible-playbook \
     -e "cloudwatch_directory=${RESULTS_DIRECTORY}/cloudwatch" \
     -e "logs_directory=${RESULTS_DIRECTORY}/logs" \
     "${SOURCEDIR}/playbook-dbt2-run.yml"
-
-# Copy infrastructure.yml and vars.yml
-cp ../infrastructure.yml "$RESULTS_DIRECTORY/dbt2-data"
-cp ../vars.yml "$RESULTS_DIRECTORY/dbt2-data"
