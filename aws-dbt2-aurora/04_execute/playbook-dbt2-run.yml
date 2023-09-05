@@ -117,6 +117,7 @@
           --db-instance-identifier {{ infra.servers.aurora.postgres.resource_id.0 }}
           --log-file-name error/{{ item }}
           --starting-token 0
+          --region {{ infra.servers.aurora.postgres.region }}
           > {{ logs_directory }}/{{ item }}.json
       loop: 
         "{{ lookup('file', 'postgreslog.txt').splitlines() }}"
