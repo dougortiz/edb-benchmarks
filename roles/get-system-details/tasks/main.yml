@@ -62,14 +62,15 @@
   when: pg_log is defined and pg_log_filename is defined
 
 # coredumpctl will fail if in the middle of processing a coredump, give it up
-# to an hour to finish.
+# to an hour to finish.  It also returns 1 if there are no cores.
 - name: Capture coredumpctl info output
   ansible.builtin.shell:
     cmd: coredumpctl info
   retries: 60
   delay: 60
   register: coredumpctl
-  until: coredumpctl.rc == 0
+  until: coredumpctl.rc == 0 or coredumpctl.rc == 1
+  failed_when: coredumpctl.rc != 0 and coredumpctl.rc != 1
   become: true
 
 - name: Save coredumpctl info output
