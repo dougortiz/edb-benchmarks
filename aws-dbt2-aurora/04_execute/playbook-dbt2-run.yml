@@ -106,8 +106,8 @@
         cmd: >-
           aws rds describe-db-log-files
           --db-instance-identifier {{ infra.servers.aurora.postgres.resource_id.0 }}
-          | jq -r '.DescribeDBLogFiles[] | .LogFileName | sub("error/"; "")'
-          > {{ logs_directory }}/postgreslog.txt
+          | jq -r '.DescribeDBLogFiles[] | .LogFileName'
+      register: logfiles
 
     - name: Get Postgres error logs
       local_action:
@@ -115,12 +115,11 @@
         cmd: >-
           aws rds download-db-log-file-portion
           --db-instance-identifier {{ infra.servers.aurora.postgres.resource_id.0 }}
-          --log-file-name error/{{ item }}
+          --log-file-name {{ item }}
           --starting-token 0
           --region {{ infra.servers.aurora.postgres.region }}
-          > {{ logs_directory }}/{{ item }}.json
-      loop: 
-        "{{ lookup('file', 'postgreslog.txt').splitlines() }}"
+          > {{ logs_directory }}/{{ item | basename }}.json
+      with_items: "{{ logfiles.stdout_lines }}"
 
     - name: Generate DBT2 report
       ansible.builtin.command:
