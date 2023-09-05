@@ -85,6 +85,21 @@
             create: true
       no_log: "{{ disable_logging }}"
 
+    - name: Configure BDR 'default_streaming_mode' to off
+      ansible.builtin.include_role:
+        name: manage_dbserver
+        tasks_from: execute_sql_scripts
+        apply:
+          throttle: 1
+      vars:
+        pg_query:
+          - query: "SELECT bdr.alter_node_group_option(node_group_name := '{{ parent_group }}',
+                                          config_key := 'streaming_mode',
+                                          config_value := 'off'
+                                          )"
+            db: "{{ pgd_cluster_database }}"
+        ignore_query_execution_error: false
+
     - name: Reload Postgres configuration
       community.postgresql.postgresql_query:
         query: >-

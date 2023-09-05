@@ -42,3 +42,5 @@ initdb_executed: true
 
 # For CAMO Commit Scopes
 max_prepared_transactions: 100
+# This group is present in PGD cluster
+parent_group: 'pgd_cluster'

@@ -22,27 +22,155 @@
         loop_var: node
       when: node.key == 'pgd1'
 
-    - name: Initialize pgd_bench prior to benchmark
-      ansible.builtin.shell: |
-        ./pgd_bench -h {{ node.key }} -p {{ pg_port }} -i {{ pg_database }} -s {{ pgd_bench_scale_factor }}
-      args:
-        chdir: "{{ pgd_bench_home }}"        
+    - name: Assign value to pg_node
+      set_fact:
+        pg_node: "{{ node.key }}"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      when: node.key == 'pgd1'
+
+    - name: Display pg_node value
+      debug:
+        msg: " pg_node: {{ pg_node }}"
+
+    - name: Drop 'pgbench_accounts' table
+      community.postgresql.postgresql_query:
+        autocommit: true
+        query: "DROP TABLE IF EXISTS pgbench_accounts"
+        db: "{{ pg_database }}"
+        login_user: "{{ pg_owner }}"
+        port: "{{ pg_port }}"
+        login_unix_socket: "{{ pg_unix_socket_directories[0] }}"
       become_user: "{{ pg_owner }}"
       loop: "{{ infra.servers.machines | dict2items }}"
       loop_control:
         loop_var: node
       when: node.key == 'pgd1'
 
-    - name: Execute pgd_bench benchmark
-      ansible.builtin.shell: |
-        {{ pgd_bench_home }}/pgd_bench -T {{ pgd_bench_duration }} -c {{ pgd_bench_clients }} -N -m camo -h {{ node.key }} -p {{ pg_port }} {{ pg_database }} {{ node.key }}
-      args:
-        chdir: "{{ pgd_bench_home }}"
-      become_user: "{{ pg_owner }}"        
+    - name: Drop 'pgbench_branches' tables
+      community.postgresql.postgresql_query:
+        autocommit: true
+        query: "DROP TABLE IF EXISTS pgbench_branches"
+        db: "{{ pg_database }}"
+        login_user: "{{ pg_owner }}"
+        port: "{{ pg_port }}"
+        login_unix_socket: "{{ pg_unix_socket_directories[0] }}"
+      become_user: "{{ pg_owner }}"
       loop: "{{ infra.servers.machines | dict2items }}"
       loop_control:
         loop_var: node
       when: node.key == 'pgd1'
+
+    - name: Drop 'pgbench_tellers' table if exists
+      community.postgresql.postgresql_query:
+        autocommit: true
+        query: "DROP TABLE IF EXISTS pgbench_tellers"
+        db: "{{ pg_database }}"
+        login_user: "{{ pg_owner }}"
+        port: "{{ pg_port }}"
+        login_unix_socket: "{{ pg_unix_socket_directories[0] }}"
+      become_user: "{{ pg_owner }}"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      when: node.key == 'pgd1'
+
+    # - name: Drop 'pgbench_history' table if exists
+    #   community.postgresql.postgresql_query:
+    #     autocommit: true
+    #     query: "DROP TABLE IF EXISTS pgbench_history"
+    #     db: "{{ pg_database }}"
+    #     login_user: "{{ pg_owner }}"
+    #     port: "{{ pg_port }}"
+    #     login_unix_socket: "{{ pg_unix_socket_directories[0] }}"
+    #   become_user: "{{ pg_owner }}"
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
+
+    - name: Copy the exec-pgdbench.sh file
+      ansible.builtin.copy:
+        src: files/exec-pgdbench.sh
+        dest: "{{ pgd_bench_home }}/exec-pgdbench.sh"
+        mode: "0755"
+
+    # - name: Drop all pgbench tables
+    #   ansible.builtin.shell: >
+    #     {{ pgd_bench_home }}pgd_bench -i -I d
+    #   args:
+    #     executable: /bin/bash
+    #   become_user: "{{ pg_owner }}"
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
+
+    # - name: Drop all pgbench tables
+    #   ansible.builtin.shell: |
+    #     {{ pgd_bench_home }}pgd_bench -i -I d
+    #   args:
+    #     chdir: "{{ pgd_bench_home }}"        
+    #   become_user: "{{ pg_owner }}"
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
+
+    # - name: Drop pgd_bench tables
+    #   ansible.builtin.shell: |
+    #     {{ pgd_bench_home }}pgd_bench -h {{ node.key }} -p {{ pg_port }} -i {{ pg_database }} -I d
+    #   args:
+    #     chdir: "{{ pgd_bench_home }}"
+    #     # executable: /bin/bash
+    #   become_user: "{{ pg_owner }}"
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
+
+    - name: Execute the pgd_bench script
+      ansible.builtin.shell: >
+        {{ pgd_bench_home }}exec-pgdbench.sh
+      args:
+        executable: /bin/bash
+      environment:
+        PGD_HOME: "{{ pgd_bench_home }}"
+        PG_NODE: "{{ pg_node }}"
+        PG_DATABASE: "{{ pg_database }}"
+        PG_PORT: "{{ pg_port }}"
+        PGD_DURATION: "{{ pgd_bench_duration }}"
+        PGD_SCALE: "{{ pgd_scale }}"
+        PGD_CLIENTS: "{{ pgd_clients }}"
+      become_user: "{{ pg_owner }}"
+      loop: "{{ infra.servers.machines | dict2items }}"
+      loop_control:
+        loop_var: node
+      when: node.key == 'pgd1'
+
+    # - name: Initialize pgd_bench prior to benchmark
+    #   ansible.builtin.shell: |
+    #     {{ pgd_bench_home }}pgd_bench -h {{ node.key }} -p {{ pg_port }} -i {{ pg_database }} -q -s {{ pgd_bench_scale_factor }}
+    #   args:
+    #     chdir: "{{ pgd_bench_home }}"        
+    #   become_user: "{{ pg_owner }}"
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
+
+    # - name: Execute pgd_bench benchmark
+    #   ansible.builtin.shell: |
+    #     {{ pgd_bench_home }}pgd_bench -h {{ node.key }} -p {{ pg_port }} -i {{ pg_database }} -q -s {{ pgd_bench_scale_factor }}      
+    #     {{ pgd_bench_home }}pgd_bench -T {{ pgd_bench_duration }} -c {{ pgd_bench_clients }} -N -m camo -h {{ node.key }} -p {{ pg_port }} {{ pg_database }} {{ node.key }} >> 
+    #   args:
+    #     chdir: "{{ pgd_bench_home }}"
+    #   become_user: "{{ pg_owner }}"        
+    #   loop: "{{ infra.servers.machines | dict2items }}"
+    #   loop_control:
+    #     loop_var: node
+    #   when: node.key == 'pgd1'
 
     # - name: Fetch data files
     #   ansible.builtin.fetch:
