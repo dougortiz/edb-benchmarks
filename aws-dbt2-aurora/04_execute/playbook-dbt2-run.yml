@@ -85,6 +85,10 @@
       changed_when: false
       register: result
 
+    - name: Workload execution output
+      ansible.builtin.debug:
+        var: result
+
     - name: Get end time
       include_role:
         name: get-aws-cloudwatch-aurora-postgres-stats
@@ -104,7 +108,6 @@
           --db-instance-identifier {{ infra.servers.aurora.postgres.resource_id.0 }}
           | jq -r '.DescribeDBLogFiles[] | .LogFileName | sub("error/"; "")'
           > {{ logs_directory }}/postgreslog.txt
-      register: result
 
     - name: Get Postgres error logs
       local_action:
@@ -117,11 +120,6 @@
           > {{ logs_directory }}/{{ item }}.json
       loop: 
         "{{ lookup('file', 'postgreslog.txt').splitlines() }}"
-      register: result
-
-    - name: Workload execution output
-      ansible.builtin.debug:
-        var: result
 
     - name: Generate DBT2 report
       ansible.builtin.command:
