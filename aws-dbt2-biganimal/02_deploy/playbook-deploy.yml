@@ -23,6 +23,7 @@
   roles:
     - setup_repo
     - setup_dbt2_driver
+    - setup_touchstone_tools
 
   tasks:
     - name: Update /var/lib/pgsql/.pgpass

@@ -41,7 +41,8 @@
         name: "{{ pg_owner }}"
 
   roles:
-    - role: setup_dbt2_driver
+    - setup_dbt2_driver
+    - setup_touchstone_tools
 
   tasks:
     - name: Update .pgpass

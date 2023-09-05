@@ -16,9 +16,9 @@ export REGION="${REGION:=us-east-1}"
 export ZONE0="${ZONE0:=us-east-1b}"
 export DRIVER_INSTANCE_TYPE="${DRIVER_INSTANCE_TYPE:=c5.9xlarge}"
 # Postgres Instance
-export PG_INSTANCE_TYPE="${PG_INSTANCE_TYPE:=r5.8xlarge}"
-export PG_STORAGE_TYPE="${PG_STORAGE_TYPE:=io2}"
-export PG_STORAGE_PROPERTIES="${PG_STORAGE_PROPERTIES:=io2}"
+export PG_INSTANCE_TYPE="${PG_INSTANCE_TYPE:=r5b.8xlarge}"
+export PG_STORAGE_TYPE="${PG_STORAGE_TYPE:=io2-block-express}"
+export PG_STORAGE_PROPERTIES="${PG_STORAGE_PROPERTIES:=io2-block-express}"
 export PG_STORAGE_SIZE="${PG_STORAGE_SIZE:=4096}"
 export PG_STORAGE_IOPS="${PG_STORAGE_IOPS:=64000}"
 # Postgres Settings

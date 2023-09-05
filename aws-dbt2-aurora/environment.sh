@@ -11,9 +11,9 @@ export SSH_USER="${SSH_USER:=rocky}"
 export REGION="${REGION:=us-east-1}"
 export ZONE0="${ZONE0:=us-east-1b}"
 export ZONE1="${ZONE1:=us-east-1c}"
-export DRIVER_INSTANCE_TYPE="${DRIVER_INSTANCE_TYPE:=c5.9xlarge}"
+export DRIVER_INSTANCE_TYPE="${DRIVER_INSTANCE_TYPE:=c5.xlarge}"
 # Database Instance
-export PG_INSTANCE_TYPE="${PG_INSTANCE_TYPE:=db.r5.8xlarge}"
+export PG_INSTANCE_TYPE="${PG_INSTANCE_TYPE:=db.r5.2xlarge}"
 # Database Settings
 export PG_VERSION="${PG_VERSION:=14}"
 
