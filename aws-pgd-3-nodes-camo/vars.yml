@@ -11,33 +11,30 @@ install_pgd: true
 pgd_version: 5
 enable_pgdg_repo: true
 
-pg_port: 5432
+pg_port: 5444
 pg_database: postgres
-pg_owner: postgres
-pg_group: postgres
-pg_owner_password: postgres
-pg_user: postgres
+pg_owner: enterprisedb
+pg_group: enterprisedb
+pg_owner_password: enterprisedb
+pg_user: enterprisedb
 
 pgd_cluster_name: pgd_cluster
 pgd_cluster_database: "{{ pg_database }}"
 pgd_cluster_database_owner: "{{ pg_owner }}"
 pgd_replication_user: pgd_replication_user
 
-#pg_data: /pgdata/data
-#pg_data: /var/lib/pgsql/{{ pg_version }}/data
-#pg_data: /var/lib/pgsql/data
-#pg_wal: /pgwal/wal
-#pg_wal: ""
+pgd_bench_home: /usr/edb/as15/bin/
+# With additional storage
+pg_data: /pgdata/data
+# No additional storage
+#pg_data: /var/lib/edb/as{{ pg_version }}/main/data
+# With or without additional storage
+pg_wal: /pgwal/wal
 
 disable_logging: false
-# pg_allow_ip_addresses: []
-#pg_login_unix_socket: /var/run/postgresql
-# bdr_writers: 16
-# bdr_wal_decoder: false
-
-#enable_edb_repo: true
 
 # unix socket domain directories
+pg_login_unix_socket: /var/run/postgresql
 pg_unix_socket_directories:
   - "/var/run/postgresql"
 

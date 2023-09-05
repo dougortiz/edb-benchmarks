@@ -19,7 +19,7 @@
       ansible.builtin.set_fact:
         pg_version: 15            # Change the version of Postgres you want to install
         pg_type: "EPAS"           # Change the pg_type to EPAS if EDB Advanced Server is needed
-        #repo_token: "XXXXX"   # EDB repo 2.0 token
+        repo_token: "XXXXXXXXX"   # EDB repo 2.0 token
         edb_enable_tde: false     # Enable TDE
         edb_key_unwrap_cmd: ""    # EDB Unwrap command to decrypt EDB master key. Use can use KMS command to get the real key
         edb_key_wrap_cmd: ""      # EDB Key wrap command to encrypt EDB master key. User can also use KMS commands to get the key
@@ -49,67 +49,9 @@
         ##    default_group_cs: false
         #    cs_rule: "ALL ( pgd_remaining_nodes ) GROUP COMMIT"
 
-    # - name: Load servers.yml
-    #   ansible.builtin.include_vars:
-    #     file: "{{ terraform_project_path }}/servers.yml"
-    #     name: infra
-
-    # - name: Allow 'all' nonssl connections for 'pgd_cluster_database' on the instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "host   all  all  0.0.0.0/0   trust"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
-    # - name: Allow 'all' ssl connections for 'pgd_cluster_database' on instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "host   all  all  ::/0   trust"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
-    # - name: Allow 'all' nonssl connections for 'pgd_cluster_database' on the instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "hostssl   all  all  0.0.0.0/0   trust"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
-    # - name: Allow 'all' ssl connections for 'pgd_cluster_database' on instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "hostssl   all  all  ::/0   trust"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
-    # - name: Allow 'pgd_replication_user' nonssl connections for 'pgd_cluster_database' on the instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "host   {{ pgd_cluster_database }}  {{ pgd_replication_user }}  {{ node.value.private_ip }}/32   scram-sha-256"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
-    # - name: Allow 'pgd_replication_user' ssl connections for 'pgd_cluster_database' on the instances
-    #   ansible.builtin.lineinfile:
-    #     path: "{{ pg_data }}/pg_hba.conf"
-    #     line: "hostssl   {{ pgd_cluster_database }}  {{ pgd_replication_user }}  {{ node.value.private_ip }}/32   scram-sha-256"
-    #   loop: "{{ infra.servers.machines | dict2items }}"
-    #   loop_control:
-    #     loop_var: node
-    #   become_user: "{{ pg_owner }}"
-
   roles:
     - role: setup_repo
     - role: install_dbserver
     - role: init_dbserver
+    - role: manage_dbserver    
     - role: setup_pgd
