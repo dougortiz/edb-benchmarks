@@ -26,12 +26,9 @@
 
     - name: Make sure DBT2 target data dir and archive do not exist
       ansible.builtin.file:
-        path: "{{ item }}"
+        path: "/tmp/dbt2-data"
         state: absent
       become: true
-      loop:
-        - /tmp/dbt2-data
-        - /tmp/dbt2-data.tar.gz
 
     - name: Display dbt2_connections and ansible_processor_nproc
       ansible.builtin.debug:
@@ -134,23 +131,18 @@
       ansible.builtin.debug:
         var: result
 
-    - name: Create data archive on remote
-      ansible.builtin.command:
-        cmd: tar cvzf /tmp/dbt2-data.tar.gz -C /tmp/dbt2-data/ .
-
-    - name: Fetch DBT2 data files to localhost
-      ansible.builtin.fetch:
-        src: "/tmp/dbt2-data.tar.gz"
-        dest: "{{ results_directory }}/"
-        flat: true
-
-    - name: Extract data contents to localhost results directory
-      ansible.builtin.shell:
-        cmd: |
-          tar xzf "{{ results_directory }}/dbt2-data.tar.gz" -C "{{ results_directory }}"
-      delegate_to: localhost
+    - name: Retrieve DBT-2 results
+      ansible.posix.synchronize:
+        mode: pull
+        src: "/tmp/dbt2-data"
+        dest: "{{ results_directory }}"
+      become: true
 
     - name: Process metrics
       include_role:
         name: get-aws-cloudwatch-aurora-postgres-stats
         tasks_from: process-metrics.yml
+
+    - name: Save system details
+      ansible.builtin.include_role:
+        name: get-system-details

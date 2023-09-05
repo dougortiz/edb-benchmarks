@@ -16,7 +16,7 @@ ansible-playbook \
     -e "@$SOURCEDIR/../environment.yml" \
     -e "@$SOURCEDIR/../vars.yml" \
     -e "terraform_project_path=${TERRAFORM_PROJECT_PATH}" \
-    -e "results_directory=${RESULTS_DIRECTORY}/dbt2-data" \
+    -e "results_directory=${RESULTS_DIRECTORY}" \
     -e "cloudwatch_directory=${RESULTS_DIRECTORY}/cloudwatch" \
     -e "logs_directory=${RESULTS_DIRECTORY}/logs" \
     "${SOURCEDIR}/playbook-dbt2-run.yml"
