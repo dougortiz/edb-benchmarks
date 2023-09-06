@@ -49,7 +49,7 @@
 - name: Check if PostgreSQL log exists
   ansible.builtin.stat:
     path: "{{ pg_log }}/{{ pg_log_filename }}"
-  register: pglog
+  register: stat_result
   when: pg_log is defined and pg_log_filename is defined
   become: true
 
@@ -59,7 +59,10 @@
     dest: "{{ save_dir }}/{{ pg_log_filename }}"
     flat: true
   become: true
-  when: pg_log is defined and pg_log_filename is defined
+  when:
+    - pg_log is defined
+    - pg_log_filename is defined
+    - stat_result.stat.exists
 
 # coredumpctl will fail if in the middle of processing a coredump, give it up
 # to an hour to finish.  It also returns 1 if there are no cores.
