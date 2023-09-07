@@ -1,4 +1,6 @@
 ---
+disable_logging: false
+enable_edb_repo: false
 pg_database: "postgres"
 pg_port: 5432
 pg_type: "PG"

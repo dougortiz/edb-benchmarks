@@ -15,10 +15,6 @@
     - name: Gather facts for first time
       ansible.builtin.setup:
 
-    - name: Initialize the user defined variables
-      set_fact:
-        enable_edb_repo: false
-
     - name: Create {{ pg_owner }} OS user
       ansible.builtin.user:
         name: "{{ pg_owner }}"
@@ -61,11 +57,6 @@
 
   collections:
     - edb_devops.edb_postgres
-
-  pre_tasks:
-    - name: Initialize the user defined variables
-      set_fact:
-        disable_logging: false
 
   roles:
     - install_dbserver
