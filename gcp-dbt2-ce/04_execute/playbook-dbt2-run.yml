@@ -19,12 +19,10 @@
 
     - name: Make sure DBT2 target data dir and archive do not exist
       ansible.builtin.file:
-        path: "{{ item }}"
+        path: "/tmp/dbt2-data"
         state: absent
       become: true
       loop:
-        - /tmp/dbt2-data
-        - /tmp/dbt2-data.tar.gz
 
     # Use dbt2_connections as a limit to the number of connections that may be
     # opened, which in units matching the number of processors on the driver
@@ -83,15 +81,12 @@
       ansible.builtin.debug:
         var: result
 
-    - name: Create data archive
-      ansible.builtin.command:
-        cmd: tar cvzf /tmp/dbt2-data.tar.gz /tmp/dbt2-data
-
-    - name: Fetch DBT2 data files
-      ansible.builtin.fetch:
-        src: "/tmp/dbt2-data.tar.gz"
-        dest: "{{ results_directory }}/dbt2-data.tar.gz"
-        flat: true
+    - name: Fetch DBT-2 results
+      ansible.posix.synchronize:
+        mode: pull
+        src: "/tmp/dbt2-data"
+        dest: "{{ results_directory }}"
+      become: true
 
     - name: Save system details
       ansible.builtin.include_role:
