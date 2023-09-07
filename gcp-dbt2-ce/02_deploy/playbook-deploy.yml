@@ -58,6 +58,45 @@
   collections:
     - edb_devops.edb_postgres
 
+  # dirty hack: bignimal
+  pre_tasks:
+    - name: Initialize the user defined variables
+      set_fact:
+        pg_initdb_options: "--encoding=UTF-8 --locale=en_US.UTF-8"
+        pg_init_conf_params:
+          - name: archive_timeout
+            value: '300'
+          - name: archive_timeout
+            value: '300'
+          - name: effective_cache_size
+            value: '60GB'
+          - name: idle_in_transaction_session_timeout
+            value: '0'
+          - name: log_autovacuum_min_duration
+            value: '-1'
+          - name: log_lock_waits
+            value: 'off'
+          - name: log_min_duration_statement
+            value: '-1'
+          - name: log_rotation_age
+            value: '0'
+          - name: log_temp_files
+            value: '-1'
+          - name: maintenance_work_mem
+            value: '754975'
+          - name: max_replication_slots
+            value: '32'
+          - name: shared_buffers
+            value: '1048576'
+          - name: tcp_keepalives_count
+            value: '5'
+          - name: tcp_keepalives_idle
+            value: '120'
+          - name: tcp_keepalives_interval
+            value: '30'
+          - name: wal_sender_timeout
+            value: '5000'
+
   roles:
     - install_dbserver
     - init_dbserver
