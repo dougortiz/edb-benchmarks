@@ -17,7 +17,6 @@
 
     - name: Initialize the user defined variables
       set_fact:
-        disable_logging: false
         enable_edb_repo: false
 
     - name: Create {{ pg_owner }} OS user
@@ -37,10 +36,6 @@
     - edb_devops.edb_postgres
 
   pre_tasks:
-    - name: Initialize the user defined variables
-      set_fact:
-        disable_logging: false
-
     - name: Create {{ pg_owner }} OS user
       ansible.builtin.user:
         name: "{{ pg_owner }}"
@@ -71,81 +66,6 @@
     - name: Initialize the user defined variables
       set_fact:
         disable_logging: false
-        # dirty hack
-        pg_initdb_options: "--encoding=UTF-8 --locale=en_US.UTF-8"
-        pg_init_conf_params:
-          - name: archive_timeout
-            value: '300'
-          - name: autovacuum_max_workers
-            value: '3'
-          - name: autovacuum_vacuum_cost_limit
-            value: '-1'
-          - name: bgwriter_delay
-            value: '200'
-          - name: checkpoint_timeout
-            value: '300'
-          - name: cpu_tuple_cost
-            value: '0.01'
-          - name: effective_cache_size
-            value: '60GB'
-          - name: effective_io_concurrency
-            value: '128'
-          - name: full_page_writes
-            value: 'off'
-          - name: hot_standby_feedback
-            value: 'on'
-          - name: idle_in_transaction_session_timeout
-            value: '0'
-          - name: log_min_duration_statement
-            value: '-1'
-          - name: log_rotation_age
-            value: '0'
-          - name: log_truncate_on_rotation
-            value: 'off'
-          - name: logging_collector
-            value: 'off'
-          - name: maintenance_work_mem
-            value: '65536'
-          - name: max_connections
-            value: '1000'
-          - name: max_parallel_workers_per_gather
-            value: '16'
-          - name: max_replication_slots
-            value: '60'
-          - name: max_slot_wal_keep_size
-            value: '819200'
-          - name: max_wal_size
-            value: '1504'
-          - name: max_worker_processes
-            value: '64'
-          - name: shared_buffers
-            value: '64GB'
-          - name: superuser_reserved_connections
-            value: '30'
-          - name: tcp_keepalives_count
-            value: '5'
-          - name: tcp_keepalives_idle
-            value: '300'
-          - name: tcp_keepalives_interval
-            value: '60'
-          - name: track_io_timing
-            value: 'on'
-          - name: wal_buffers
-            value: '65536'
-          - name: wal_compression
-            value: 'off'
-          - name: wal_init_zero
-            value: 'off'
-          - name: wal_keep_size
-            value: '102400'
-          - name: wal_level
-            value: 'replica'
-          - name: wal_log_hints
-            value: 'off'
-          - name: wal_receiver_timeout
-            value: '60000'
-          - name: work_mem
-            value: '32768'
 
   roles:
     - install_dbserver
