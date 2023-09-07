@@ -92,3 +92,7 @@
         src: "/tmp/dbt2-data.tar.gz"
         dest: "{{ results_directory }}/dbt2-data.tar.gz"
         flat: true
+
+    - name: Save system details
+      ansible.builtin.include_role:
+        name: get-system-details

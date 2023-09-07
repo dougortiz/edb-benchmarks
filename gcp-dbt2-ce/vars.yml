@@ -1,5 +1,6 @@
 ---
 disable_logging: false
+enable_core_dump: true
 enable_edb_repo: false
 pg_database: "postgres"
 pg_port: 5432
@@ -10,3 +11,5 @@ pg_password: "1234567890zyxu"
 pg_superuser: "postgres"
 pg_user_home: "/var/lib/pgsql"
 pg_version: 14
+pg_log: "/var/log/{% if pg_type=='EPAS' %}edb{% else %}postgres{% endif %}"
+pg_log_filename: "postgresql.log"

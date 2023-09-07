@@ -8,6 +8,7 @@ RESULTS_DIRECTORY="${SOURCEDIR}/../results"
 export ANSIBLE_PIPELINING=true
 export ANSIBLE_SSH_PIPELINING=true
 export ANSIBLE_HOST_KEY_CHECKING=false
+export ANSIBLE_ROLES_PATH="${SOURCEDIR}/../../roles"
 
 # Run the benchmark
 ansible-playbook \
