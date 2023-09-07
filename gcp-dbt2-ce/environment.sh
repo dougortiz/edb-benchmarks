@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 # Generic
 export BUCKET_NAME=${BUCKET_NAME:=ebac-reports}
-export BENCHMARK_NAME=${BENCHMARK_NAME:=AWS_DBT2_AURORA}
+export BENCHMARK_NAME=${BENCHMARK_NAME:=GCP_DBT2_CE}
 
 # Ansible
 export ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:=0}"
