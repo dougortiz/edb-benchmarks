@@ -24,6 +24,7 @@ pgd_cluster_database_owner: "{{ pg_owner }}"
 pgd_replication_user: pgd_replication_user
 
 pgd_bench_home: /usr/edb/as15/bin/
+pgd_user_home: /var/lib/edb/
 # With additional storage
 pg_data: /pgdata/data
 # No additional storage
@@ -44,3 +45,9 @@ initdb_executed: true
 max_prepared_transactions: 100
 # This group is present in PGD cluster
 parent_group: 'pgd_cluster'
+# Type of Commit Scope to benchmark: CAMO, GC
+pgd_bench_type: 'GC'
+
+# Logging
+pg_log: "/var/log/{% if pg_type=='EPAS' %}edb{% else %}postgres{% endif %}"
+pg_log_filename: "postgresql.log"

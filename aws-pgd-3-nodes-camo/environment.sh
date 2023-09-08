@@ -1,7 +1,11 @@
 #!/bin/bash -eux
 # Generic
 export BUCKET_NAME="${BUCKET_NAME:=ebac-reports}"
-export BENCHMARK_NAME="${BENCHMARK_NAME:=AWS_PGD_3_NODES}"
+
+# CAMO Benchmark Name
+export BENCHMARK_NAME="${BENCHMARK_NAME:=AWS_PGD_CAMO_3_NODES}"
+# COMMIT SCOPE Benchmark Name
+#export BENCHMARK_NAME="${BENCHMARK_NAME:=AWS_PGD_CS_3_NODES}"
 
 # Ansible
 export ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:=0}"
@@ -26,9 +30,9 @@ export PG_SSH_USER="${PG_SSH_USER:=rocky}"
 
 # CAMO pgd_bench configuration settings
 export PGD_HOME="${PGD_HOME:=/usr/edb/as15/bin/}"
-export PGD_DURATION="${PGD_BENCH_DURATION:=15}"
-export PGD_SCALE="${PGD_BENCH_SCALE_FACTOR:=10}"
-export PGD_CLIENTS="${PGD_BENCH_CLIENTS:=4}"
+export PGD_DURATION="${PGD_DURATION:=15}"
+export PGD_SCALE="${PGD_SCALE:=10}"
+export PGD_CLIENTS="${PGD_CLIENTS:=4}"
 
 # Storage
 export PGDATA_STORAGE_TYPE="${STORAGE_TYPE:=io2}"
