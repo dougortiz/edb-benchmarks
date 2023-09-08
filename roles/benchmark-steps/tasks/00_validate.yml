@@ -1,0 +1,92 @@
+---
+  - name: Extract environment variables from bash file
+    ansible.builtin.set_fact:
+      # 1. Split by newline
+      # 2. grab all values which which do not have <secret> to avoid sharing/exposing secrets in shared results
+      # 3. capture the variable name
+      bash_variables: "{{ \
+                      lookup('file', env_source_file) \
+                      | split('\n') \
+                      | select('match', '^(?![^\n]*<secret>)\\s*[^#][^=]*') \
+                      | map('regex_replace', '^(export\\s)*([^=]*).*$', '\\2') \
+                      }}"
+
+      default_variables: {}
+
+      static_variables:
+        root_directory: "{{ root_directory }}"
+        benchmark_directory: "{{ benchmark_directory }}"
+        results_directory: "{{ results_directory }}"
+        terraform_project_name: "{{ terraform_project_name }}"
+        terraform_project_path: "{{ terraform_project_path }}"
+        terraform_plan_filename: "{{ terraform_plan_filename }}"
+
+  - name: Generate yaml file based on found variables
+    ansible.builtin.copy:
+      content: |
+        # Ansible Generated file inside of {{ playbook_dir }}
+        # lowercase anible variables mapped to UPPERCASE bash environment variables
+        {% for variable in bash_variables %}
+        {{ variable | lower }}: "{{ '{{' }} lookup('env', '{{ variable | upper }}') {{ '}}' }}"
+        {% endfor %}
+      dest: "{{ env_yml_file }}"
+
+  - name: Load generated variable file
+    ansible.builtin.include_vars:
+      file: "{{ env_yml_file }}"
+      name: env_yml_input
+
+  - name: Load vars file
+    ansible.builtin.include_vars:
+      file: "{{ vars_file }}"
+      name: vars_input
+
+  - name: Check if overrides is a file
+    ansible.builtin.stat:
+      path: "{{ overrides }}"
+    register: override_file
+
+  - name: Load overrides file
+    ansible.builtin.include_vars:
+      file: "{{ overrides }}"
+      name: env_overrides
+    when: override_file.stat.exists
+
+  - name: Load stringified json overrides
+    ansible.builtin.set_fact:
+      env_overrides: "{{ overrides | default('{}', true) | from_json }}"
+    when: not override_file.stat.exists
+
+  - name: Set final variables
+    ansible.builtin.set_fact:
+      final: "{{ default_variables | combine(vars_input, env_yml_input, env_overrides, static_variables, recursive=true) }}"
+
+  - name: Generate final yaml file
+    ansible.builtin.copy:
+      content: |
+        # Ansible Generated file inside of {{ playbook_dir }}
+        # lowercase anible variables mapped to UPPERCASE bash environment variables
+        {{ final | to_nice_yaml(indent=2) }}
+      dest: "{{ env_yml_file }}"
+
+
+  - name: Load final yaml file
+    ansible.builtin.include_vars:
+      file: "{{ env_yml_file }}"
+      name: final
+
+  - name: Create results directory
+    ansible.builtin.file:
+      path: "{{ results_directory }}"
+      state: directory
+
+  - name: Copy environment.yml file
+    ansible.builtin.copy:
+      src: "{{ env_yml_file }}"
+      dest: "{{ results_directory }}/{{ env_yml_file | basename }}"
+
+  - name: Create and copy stringified json
+    ansible.builtin.copy:
+      content: |
+        {{ final | to_json(separators=(',',':'), sort_keys=true) }}
+      dest: "{{ results_directory }}/{{ (env_yml_file | basename | splitext)[0] }}.json"
