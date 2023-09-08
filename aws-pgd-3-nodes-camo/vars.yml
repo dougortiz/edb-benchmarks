@@ -46,7 +46,8 @@ max_prepared_transactions: 100
 # This group is present in PGD cluster
 parent_group: 'pgd_cluster'
 # Type of Commit Scope to benchmark: CAMO, GC
-pgd_bench_type: 'GC'
+pgd_bench_type: 'CAMO'
+#pgd_bench_type: 'GC'
 
 # Logging
 pg_log: "/var/log/{% if pg_type=='EPAS' %}edb{% else %}postgres{% endif %}"
