@@ -3,7 +3,31 @@
   gather_facts: false
 
   tasks:
+<<<<<<< HEAD
     - name: Create initial
       include_role:
         name: benchmark-steps
         tasks_from: 00_validate.yml
+=======
+    - name: Extract environment variables
+      set_fact:
+        bash_variables: "{{ \
+                        lookup('file', env_file) \
+                        | split('\n') \
+                        | select('match', '^\\s*[^#][^=]*') \
+                        | map('regex_replace', '^(export\\s)*([^=]*).*$', '\\2') \
+                        }}"
+
+    - name: Generate yaml file based on found variables
+      copy:
+        content: |
+          # Ansible Generated file inside of {{ playbook_dir }}
+          # lowercase ansible variables mapped to UPPERCASE bash environment variables
+          {% for variable in bash_variables %}
+          {{ variable | lower }}: "{{ '{{' }} lookup('env', '{{ variable | upper }}') {{ '}}' }}"
+          {% endfor %}
+        dest: "{{ vars_file }}"
+
+    - name: Load generated variable file
+      include_vars: "{{ vars_file }}"
+>>>>>>> upstream/main

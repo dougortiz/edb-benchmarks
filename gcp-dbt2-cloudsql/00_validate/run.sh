@@ -1,6 +1,7 @@
 #!/bin/bash -eux
 
 SOURCEDIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+<<<<<<< HEAD
 BENCHMARK_DIRECTORY="$(realpath "${SOURCEDIR}/..")"
 ROOT_DIRECTORY="$(realpath "${BENCHMARK_DIRECTORY}/..")"
 TERRAFORM_PROJECT_NAME="terraform"
@@ -23,3 +24,13 @@ ANSIBLE_ROLES_PATH=$ANSIBLE_ROLES_PATH \
         -e "terraform_project_name=${TERRAFORM_PROJECT_NAME}" \
         -e "terraform_project_path=${TERRAFORM_PROJECT_PATH}" \
         -e "terraform_plan_filename=${TERRAFORM_PLAN_FILENAME}"
+=======
+TERRAFORM_PROJECT_NAME="terraform"
+TERRAFORM_PROJECT_PATH="${SOURCEDIR}/../${TERRAFORM_PROJECT_NAME}"
+TERRAFORM_PLAN_FILENAME="terraform.plan"
+RESULTS_DIRECTORY="${SOURCEDIR}/../results"
+
+ansible-playbook "${SOURCEDIR}/run.yml" \
+    -e "vars_file=${SOURCEDIR}/../environment.yml" \
+    -e "env_file=${SOURCEDIR}/../environment.sh"
+>>>>>>> upstream/main
